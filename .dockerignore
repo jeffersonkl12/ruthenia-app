@@ -1,0 +1,21 @@
+# O build do agent-api só precisa de package.json, bun.lock e api/.
+node_modules
+**/node_modules
+dist
+dist-ssr
+build
+src
+public
+index.html
+vite.config.ts
+tsconfig.node.json
+src-tauri
+chat-test
+.git
+.vscode
+.idea
+**/.env
+**/.env.*
+!**/.env.example
+*.log
+*.db

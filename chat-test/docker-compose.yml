@@ -1,0 +1,46 @@
+name: ruthenia-chat-test
+
+services:
+  # Nosso shim: traduz /v1/chat/completions -> agentFactory -> grafo LangGraph.
+  agent-api:
+    build:
+      context: ..
+      dockerfile: api/Dockerfile
+    env_file: .env
+    environment:
+      AGENT_API_HOST: 0.0.0.0
+      AGENT_API_PORT: "8787"
+    expose:
+      - "8787"
+    ports:
+      - "8787:8787" # opcional — acesso via curl a partir do host
+    restart: unless-stopped
+
+  mongodb:
+    image: mongo:8.0.20
+    command: mongod --noauth
+    volumes:
+      - ./data/mongo:/data/db
+    restart: unless-stopped
+
+  librechat:
+    image: ghcr.io/danny-avila/librechat:latest
+    depends_on:
+      - mongodb
+      - agent-api
+    ports:
+      - "3080:3080"
+    env_file: .env
+    environment:
+      HOST: 0.0.0.0
+      PORT: "3080"
+      MONGO_URI: mongodb://mongodb:27017/LibreChat
+      CONFIG_PATH: /app/librechat.yaml
+      SEARCH: "false"
+      ALLOW_REGISTRATION: "true"
+    volumes:
+      - ./librechat.yaml:/app/librechat.yaml:ro
+      - ./data/librechat/images:/app/client/public/images
+      - ./data/librechat/uploads:/app/uploads
+      - ./data/librechat/logs:/app/api/logs
+    restart: unless-stopped
