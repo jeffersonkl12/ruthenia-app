@@ -25,13 +25,3 @@ export class TemplatePrompt implements PromptModule {
     return renderPrompt(this.template, vars).trim();
   }
 }
-
-/**
- * Prompt de sistema base — assistente genérico e neutro.
- * Conteúdo em `prompts/templates/system.base.md`; é a fundação sobre a qual o
- * mestre narrador será construído.
- */
-export const BASE_SYSTEM_PROMPT = TemplatePrompt.fromFile(
-  "system.base",
-  "system.base",
-);

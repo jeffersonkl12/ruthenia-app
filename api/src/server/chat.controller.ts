@@ -1,6 +1,6 @@
 import type { Context } from "hono";
 import { streamSSE } from "hono/streaming";
-import { BASE_SYSTEM_PROMPT, type ModelRequest } from "@/llm";
+import { systemPromptBuilder, type ModelRequest } from "@/llm";
 import { agentPool } from "./agent.pool";
 import {
   buildChunk,
@@ -19,7 +19,7 @@ interface PreparedRequest {
 }
 
 /** Traduz o corpo OpenAI numa configuração de agente + mensagens do LangChain. */
-function prepare(body: ChatCompletionRequest): PreparedRequest {
+async function prepare(body: ChatCompletionRequest): Promise<PreparedRequest> {
   const { provider, model } = parseModelId(body.model);
   const { system, rest } = splitSystem(body.messages ?? []);
 
@@ -30,14 +30,14 @@ function prepare(body: ChatCompletionRequest): PreparedRequest {
       temperature: body.temperature,
       maxTokens: body.max_tokens,
     },
-    systemPrompt: system ?? BASE_SYSTEM_PROMPT.render(),
+    systemPrompt: system ?? (await systemPromptBuilder.build()),
     messages: toLangchainMessages(rest),
   };
 }
 
 /** Resposta única (não-streaming). */
 export async function complete(body: ChatCompletionRequest) {
-  const { model, systemPrompt, messages } = prepare(body);
+  const { model, systemPrompt, messages } = await prepare(body);
   const agent = await agentPool.get({ model, systemPrompt });
   const result = await agent.invoke({ messages });
   return buildCompletion(result.content, body.model);
@@ -55,7 +55,7 @@ export async function streamChat(
   c: Context,
   body: ChatCompletionRequest,
 ): Promise<Response> {
-  const { model, systemPrompt, messages } = prepare(body);
+  const { model, systemPrompt, messages } = await prepare(body);
   const completionId = newCompletionId();
   const agent = await agentPool.get({ model, systemPrompt });
 

@@ -1,5 +1,5 @@
 import { modelFactory } from "@/llm/providers";
-import { BASE_SYSTEM_PROMPT } from "@/llm/prompts";
+import { systemPromptBuilder } from "@/llm/prompts";
 import { BaseAgent } from "./base.agent";
 import type { Agent, AgentSpec } from "./agent.interface";
 
@@ -29,7 +29,8 @@ export class AgentFactory {
   }
 
   /**
-   * Atalho: agente base com o prompt de sistema padrão.
+   * Atalho: agente base com o system prompt padrão montado pelo
+   * {@link systemPromptBuilder} (hoje só a camada `identity`).
    * Útil como ponto de partida enquanto o narrador não existe.
    */
   public async createDefault(
@@ -37,7 +38,7 @@ export class AgentFactory {
   ): Promise<Agent> {
     return this.create({
       name: "ruthenia-base",
-      systemPrompt: BASE_SYSTEM_PROMPT.render(),
+      systemPrompt: await systemPromptBuilder.build(),
       ...overrides,
     });
   }

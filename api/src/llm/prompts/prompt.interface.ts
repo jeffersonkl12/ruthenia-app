@@ -7,7 +7,7 @@ export type PromptVars = Record<string, string | number | boolean>;
  * testável isoladamente.
  */
 export interface PromptModule {
-  /** Identificador estável (ex.: "system.base", "system.narrator"). */
+  /** Identificador estável (ex.: "system.identity", "system.narrator"). */
   readonly id: string;
   /** Template cru, com placeholders `{{chave}}`. */
   readonly template: string;
