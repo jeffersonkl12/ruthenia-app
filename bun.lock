@@ -13,6 +13,7 @@
         "@langchain/langgraph": "^1.4.14",
         "@langchain/openai": "^1.5.11",
         "@libsql/client": "^0.18.0",
+        "@randsum/roller": "^4.0.0",
         "@tauri-apps/api": "^2",
         "@tauri-apps/plugin-opener": "^2",
         "dotenv": "^17.4.2",
@@ -158,6 +159,8 @@
     "@napi-rs/lzma-linux-x64-gnu": ["@napi-rs/lzma-linux-x64-gnu@1.5.1", "", { "os": "linux", "cpu": "x64" }, "sha512-oTXEIha4SsuXdTA4Iyskj0kpdx2yVXdhd75c2v3xGrHFfVMsbhTPZU/nMPL4sWKo4pBHm3aucLaqGlF696dTyQ=="],
 
     "@neon-rs/load": ["@neon-rs/load@0.0.4", "", {}, "sha512-kTPhdZyTQxB+2wpiRcFWrDcejc4JI6tkPuS7UZCG4l6Zvc5kU/gGQ/ozvHTh1XR5tS+UlfAfGuPajjzQjCiHCw=="],
+
+    "@randsum/roller": ["@randsum/roller@4.0.0", "", {}, "sha512-3TMPTMcrFujndyQzeX59hUClYlChj887SPB2/uiHzeY4HcYvSSzfcu4PWKm925O8cQ+A2r/eQ9TCJNyDvkqoUQ=="],
 
     "@rollup/rollup-android-arm-eabi": ["@rollup/rollup-android-arm-eabi@4.63.1", "", { "os": "android", "cpu": "arm" }, "sha512-UZ8sUxPTiHWYX9QNdJedb1kDZSpS1t/VPWBWGSgqHNi9w3Cu6IXvu2mzbhiTiPvtrqgTQJ+zqiAq2iPIPilpaQ=="],
 
