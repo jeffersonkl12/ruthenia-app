@@ -3,3 +3,5 @@ export * from "./region.schema";
 export * from "./location.schema";
 export * from "./party.schema";
 export * from "./character.schema";
+export * from "./inventory.schema";
+export * from "./item.schema";

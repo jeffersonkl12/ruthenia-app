@@ -4,3 +4,5 @@ export * from "./region.repository";
 export * from "./location.repository";
 export * from "./party.repository";
 export * from "./character.repository";
+export * from "./inventory.repository";
+export * from "./item.repository";
