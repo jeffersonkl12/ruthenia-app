@@ -129,6 +129,12 @@ async function cloneCharactersForKingdom(
       personality: sourceCharacter.personality,
       appearance: sourceCharacter.appearance,
       background: sourceCharacter.background,
+      strength: sourceCharacter.strength,
+      dexterity: sourceCharacter.dexterity,
+      constitution: sourceCharacter.constitution,
+      intelligence: sourceCharacter.intelligence,
+      wisdom: sourceCharacter.wisdom,
+      charisma: sourceCharacter.charisma,
       kingdomId: clonedKingdomId,
       partyId: clonedPartyId,
     });

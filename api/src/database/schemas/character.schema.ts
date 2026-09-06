@@ -55,6 +55,14 @@ export const characters = sqliteTable("characters", {
   personality: text("personality").notNull(),
   appearance: text("appearance").notNull(),
   background: text("background").notNull(),
+  // Atributos básicos (padrão d20). Default 10 = humano médio, mantém
+  // seed/clone funcionando sem precisar informar os seis toda vez.
+  strength: integer("strength").notNull().default(10),
+  dexterity: integer("dexterity").notNull().default(10),
+  constitution: integer("constitution").notNull().default(10),
+  intelligence: integer("intelligence").notNull().default(10),
+  wisdom: integer("wisdom").notNull().default(10),
+  charisma: integer("charisma").notNull().default(10),
   kingdomId: integer("kingdom_id")
     .notNull()
     .references(() => kingdoms.id),
@@ -77,10 +85,22 @@ export const characters = sqliteTable("characters", {
 // correspondente).
 export const insertCharacterSchema = createInsertSchema(characters, {
   age: (schema) => schema.nonnegative(),
+  strength: (schema) => schema.positive(),
+  dexterity: (schema) => schema.positive(),
+  constitution: (schema) => schema.positive(),
+  intelligence: (schema) => schema.positive(),
+  wisdom: (schema) => schema.positive(),
+  charisma: (schema) => schema.positive(),
 }).omit({ id: true });
 export const selectCharacterSchema = createSelectSchema(characters);
 export const updateCharacterSchema = createUpdateSchema(characters, {
   age: (schema) => schema.nonnegative(),
+  strength: (schema) => schema.positive(),
+  dexterity: (schema) => schema.positive(),
+  constitution: (schema) => schema.positive(),
+  intelligence: (schema) => schema.positive(),
+  wisdom: (schema) => schema.positive(),
+  charisma: (schema) => schema.positive(),
 }).omit({ id: true });
 
 export type Character = typeof characters.$inferSelect;
