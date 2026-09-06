@@ -20,6 +20,12 @@ dist-ssr
 # chat-test (Docker) — dados persistidos dos containers
 chat-test/data/
 
+# Banco local (libSQL/SQLite)
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

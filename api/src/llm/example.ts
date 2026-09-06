@@ -19,7 +19,7 @@ async function main(): Promise<void> {
 
   const agent = await agentFactory.create({
     name: "smoke",
-    model: { provider: "anthropic" },
+    model: { provider: "google-genai" },
     systemPrompt: "Responda em uma única frase.",
   });
 
