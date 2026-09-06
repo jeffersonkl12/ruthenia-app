@@ -1,4 +1,5 @@
 export * from "./repository.interface";
+export * from "./entity.repository";
 export * from "./kingdom.repository";
 export * from "./region.repository";
 export * from "./location.repository";

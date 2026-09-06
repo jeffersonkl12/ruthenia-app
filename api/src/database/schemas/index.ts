@@ -1,3 +1,4 @@
+export * from "./entity.schema";
 export * from "./kingdom.schema";
 export * from "./region.schema";
 export * from "./location.schema";
