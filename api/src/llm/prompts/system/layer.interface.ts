@@ -6,9 +6,11 @@
  * duas coisas**:
  *
  * - `static`: texto fixo (identidade, regras inegociáveis). Renderiza sem
- *   contexto e o resultado nunca muda entre requisições.
+ *   contexto, pelo interpolador simples `{{chave}}` ({@link TemplatePrompt},
+ *   arquivos `.md`); o resultado nunca muda entre requisições.
  * - `dynamic`: texto derivado do estado do mundo (party, location, NPCs, modo da
- *   sessão). Recebe um {@link SystemPromptContext} e é renderizada a cada build.
+ *   sessão). Recebe um {@link SystemPromptContext} e é renderizada a cada build,
+ *   via template Eta (`.eta`, laços/condicionais) — ver {@link etaDynamicLayer}.
  *
  * Adicionar uma camada = criar o módulo dela + incluí-la em
  * `SYSTEM_PROMPT_LAYERS` (`system-prompt.config.ts`), na posição desejada.
