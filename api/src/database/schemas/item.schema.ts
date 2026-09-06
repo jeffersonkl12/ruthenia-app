@@ -7,10 +7,12 @@ import {
 import type { z } from "zod";
 import { inventories } from "./inventory.schema";
 
+export const itemTypeEnum = ["WEAPON", "ARMOR", "TOOL"] as const;
+
 export const items = sqliteTable("items", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name").notNull(),
-  type: text("type").notNull(),
+  type: text("type", { enum: itemTypeEnum }).notNull(),
   description: text("description").notNull(),
   inventoryId: integer("inventory_id")
     .notNull()
