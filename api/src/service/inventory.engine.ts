@@ -1,6 +1,8 @@
 import type { Inventory } from "@/database/schemas/inventory.schema";
 import type { Item, NewItem } from "@/database/schemas/item.schema";
-import { characterService, inventoryService, itemService } from "@/service";
+import { characterService } from "./character.service";
+import { inventoryService } from "./inventory.service";
+import { itemService } from "./item.service";
 
 /** Dados de um item novo, sem `inventoryId` — a engine resolve o inventário. */
 export type NewItemInput = Omit<NewItem, "inventoryId">;
