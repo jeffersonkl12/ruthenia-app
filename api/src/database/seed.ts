@@ -12,14 +12,14 @@
 import "dotenv/config";
 import { client, db } from "@/database";
 import {
-  entities,
+  characters,
   kingdoms,
   locations,
   parties,
   regions,
 } from "@/database/schemas";
 import {
-  entityService,
+  characterService,
   kingdomService,
   locationService,
   partyService,
@@ -32,7 +32,7 @@ const SEED_MARKER = "Valdheim";
 async function wipeAll(): Promise<void> {
   // FK off para poder apagar em lote (locations tem auto-referência).
   await client.execute("PRAGMA foreign_keys = OFF");
-  await db.delete(entities);
+  await db.delete(characters);
   await db.delete(parties);
   await db.delete(locations);
   await db.delete(regions);
@@ -115,7 +115,7 @@ async function buildWorld() {
   });
 
   // --- Personagens ---
-  await entityService.create({
+  await characterService.create({
     name: "Kaelen Vharr",
     age: 27,
     gender: "MALE",
@@ -133,7 +133,7 @@ async function buildWorld() {
     currentLocationId: corvoCansado.id,
   });
 
-  await entityService.create({
+  await characterService.create({
     name: "Bruna Sétepunhos",
     age: 30,
     gender: "FEMALE",
@@ -150,7 +150,7 @@ async function buildWorld() {
     currentLocationId: corvoCansado.id,
   });
 
-  await entityService.create({
+  await characterService.create({
     name: "Sior Adelric Grael",
     age: 44,
     gender: "MALE",
@@ -166,7 +166,7 @@ async function buildWorld() {
     currentLocationId: forjaGrael.id,
   });
 
-  await entityService.create({
+  await characterService.create({
     name: "Irmã Neve",
     age: 33,
     gender: "FEMALE",
@@ -182,7 +182,7 @@ async function buildWorld() {
     currentLocationId: pedraAlta.id,
   });
 
-  await entityService.create({
+  await characterService.create({
     name: "O Coletor de Bruma",
     age: 51,
     gender: "OTHER",
@@ -199,7 +199,7 @@ async function buildWorld() {
     currentLocationId: postoVaugrim.id,
   });
 
-  return { kingdom: kingdom.name, regions: 2, locations: 6, parties: 1, entities: 5 };
+  return { kingdom: kingdom.name, regions: 2, locations: 6, parties: 1, characters: 5 };
 }
 
 async function main(): Promise<void> {

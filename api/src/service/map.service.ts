@@ -1,13 +1,19 @@
-import type { Entity } from "@/database/schemas/entity.schema";
+import type { Character } from "@/database/schemas/character.schema";
 import type { Location, NewLocation } from "@/database/schemas/location.schema";
 import { locationService } from "./location.service";
 import { regionService } from "./region.service";
-import { entityService } from "./entity.service";
+import { characterService } from "./character.service";
 
 export interface MapService {
   createLocation(data: NewLocation): Promise<Location>;
-  moveEntityToLocation(entityId: number, locationId: number): Promise<Entity>;
-  moveEntityToRegion(entityId: number, regionId: number): Promise<Entity>;
+  moveCharacterToLocation(
+    characterId: number,
+    locationId: number,
+  ): Promise<Character>;
+  moveCharacterToRegion(
+    characterId: number,
+    regionId: number,
+  ): Promise<Character>;
 }
 
 async function createLocation(data: NewLocation): Promise<Location> {
@@ -19,13 +25,13 @@ async function createLocation(data: NewLocation): Promise<Location> {
   return locationService.create(data);
 }
 
-async function moveEntityToLocation(
-  entityId: number,
+async function moveCharacterToLocation(
+  characterId: number,
   locationId: number,
-): Promise<Entity> {
-  const entity = await entityService.findById(entityId);
-  if (!entity) {
-    throw new Error(`Entity ${entityId} not found`);
+): Promise<Character> {
+  const character = await characterService.findById(characterId);
+  if (!character) {
+    throw new Error(`Character ${characterId} not found`);
   }
 
   const location = await locationService.findById(locationId);
@@ -33,25 +39,25 @@ async function moveEntityToLocation(
     throw new Error(`Location ${locationId} not found`);
   }
 
-  const moved = await entityService.update(entityId, {
+  const moved = await characterService.update(characterId, {
     currentLocationId: location.id,
     currentRegionId: location.regionId,
   });
 
   if (!moved) {
-    throw new Error(`Failed to move entity ${entityId}`);
+    throw new Error(`Failed to move character ${characterId}`);
   }
 
   return moved;
 }
 
-async function moveEntityToRegion(
-  entityId: number,
+async function moveCharacterToRegion(
+  characterId: number,
   regionId: number,
-): Promise<Entity> {
-  const entity = await entityService.findById(entityId);
-  if (!entity) {
-    throw new Error(`Entity ${entityId} not found`);
+): Promise<Character> {
+  const character = await characterService.findById(characterId);
+  if (!character) {
+    throw new Error(`Character ${characterId} not found`);
   }
 
   const region = await regionService.findById(regionId);
@@ -59,13 +65,13 @@ async function moveEntityToRegion(
     throw new Error(`Region ${regionId} not found`);
   }
 
-  const moved = await entityService.update(entityId, {
+  const moved = await characterService.update(characterId, {
     currentRegionId: region.id,
     currentLocationId: null,
   });
 
   if (!moved) {
-    throw new Error(`Failed to move entity ${entityId}`);
+    throw new Error(`Failed to move character ${characterId}`);
   }
 
   return moved;
@@ -73,6 +79,6 @@ async function moveEntityToRegion(
 
 export const mapService: MapService = {
   createLocation,
-  moveEntityToLocation,
-  moveEntityToRegion,
+  moveCharacterToLocation,
+  moveCharacterToRegion,
 };
