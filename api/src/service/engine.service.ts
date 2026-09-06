@@ -4,7 +4,7 @@ import { characterService } from "./character.service";
 import { inventoryService } from "./inventory.service";
 import { itemService } from "./item.service";
 
-/** Dados de um item novo, sem `inventoryId` — a engine resolve o inventário. */
+/** Dados de um item novo, sem `inventoryId` — o service resolve o inventário. */
 export type NewItemInput = Omit<NewItem, "inventoryId">;
 
 /**
@@ -16,7 +16,7 @@ export type NewItemInput = Omit<NewItem, "inventoryId">;
  * relacionam com a tabela de identidade (`entities`) — ver
  * `inventory.schema.ts`/`character.schema.ts` para esse detalhe.
  */
-export interface InventoryEngine {
+export interface EngineService {
   /**
    * Adiciona um item ao inventário de um personagem. Cria o inventário do
    * personagem se ele ainda não tiver um.
@@ -80,7 +80,7 @@ async function moveItemToCharacter(
   return moved;
 }
 
-export const inventoryEngine: InventoryEngine = {
+export const engineService: EngineService = {
   addItemToCharacter,
   moveItemToCharacter,
 };

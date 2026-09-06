@@ -6,6 +6,7 @@ export * from "./party.service";
 export * from "./character.service";
 export * from "./inventory.service";
 export * from "./item.service";
-export * from "./inventory.engine";
+export * from "./session.service";
+export * from "./engine.service";
 export * from "./world.service";
 export * from "./map.service";

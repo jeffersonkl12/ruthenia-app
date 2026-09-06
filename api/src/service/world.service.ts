@@ -1,11 +1,13 @@
 import type { Kingdom } from "@/database/schemas/kingdom.schema";
 import type { Region } from "@/database/schemas/region.schema";
 import type { Location } from "@/database/schemas/location.schema";
+import type { Session } from "@/database/schemas/session.schema";
 import { kingdomService } from "./kingdom.service";
 import { regionService } from "./region.service";
 import { locationService } from "./location.service";
 import { partyService } from "./party.service";
 import { characterService } from "./character.service";
+import { sessionService } from "./session.service";
 
 export interface WorldService {
   foundKingdom(
@@ -13,6 +15,14 @@ export interface WorldService {
     regionData: Record<string, unknown>,
   ): Promise<{ kingdom: Kingdom; region: Region }>;
   cloneKingdom(kingdomId: number): Promise<Kingdom>;
+  /**
+   * Inicia uma campanha a partir de um mundo-template: clona o mundo inteiro
+   * (ver `cloneKingdom`) e abre uma sessão vinculada só a essa cópia jogável
+   * — o template nunca ganha sessão. A sessão nasce com o nome do mundo.
+   */
+  startCampaign(
+    templateKingdomId: number,
+  ): Promise<{ session: Session; kingdom: Kingdom }>;
 }
 
 async function foundKingdom(
@@ -64,6 +74,17 @@ async function cloneKingdom(kingdomId: number): Promise<Kingdom> {
   );
 
   return clonedKingdom;
+}
+
+async function startCampaign(
+  templateKingdomId: number,
+): Promise<{ session: Session; kingdom: Kingdom }> {
+  const kingdom = await cloneKingdom(templateKingdomId);
+  const session = await sessionService.create({
+    name: kingdom.name,
+    kingdomId: kingdom.id,
+  });
+  return { session, kingdom };
 }
 
 async function clonePartiesForKingdom(
@@ -150,4 +171,8 @@ async function cloneLocationTree(
   }
 }
 
-export const worldService: WorldService = { foundKingdom, cloneKingdom };
+export const worldService: WorldService = {
+  foundKingdom,
+  cloneKingdom,
+  startCampaign,
+};

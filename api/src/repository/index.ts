@@ -7,3 +7,4 @@ export * from "./party.repository";
 export * from "./character.repository";
 export * from "./inventory.repository";
 export * from "./item.repository";
+export * from "./session.repository";
