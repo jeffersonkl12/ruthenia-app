@@ -3,13 +3,14 @@ import { db } from "@/database";
 import {
   characters,
   type Character,
-  type NewCharacter,
+  type NewCharacterInput,
   type UpdateCharacter,
 } from "@/database/schemas/character.schema";
+import { entityRepository } from "./entity.repository";
 import type { Repository } from "./repository.interface";
 
 export interface CharacterRepository
-  extends Repository<Character, NewCharacter, UpdateCharacter> {
+  extends Repository<Character, NewCharacterInput, UpdateCharacter> {
   findByPartyId(partyId: number): Promise<Character[]>;
   findByKingdomId(kingdomId: number): Promise<Character[]>;
 }
@@ -34,9 +35,20 @@ async function findByKingdomId(kingdomId: number): Promise<Character[]> {
     .where(eq(characters.kingdomId, kingdomId));
 }
 
-async function create(data: NewCharacter): Promise<Character> {
-  const [row] = await db.insert(characters).values(data).returning();
-  return row;
+/**
+ * Cria a `entity` dona do id e a linha de `characters` na mesma transação:
+ * se o insert em `characters` falhar (ex.: `kingdomId` inválido), a
+ * `entity` recém-criada é revertida junto — nunca fica um id órfão.
+ */
+async function create(data: NewCharacterInput): Promise<Character> {
+  return db.transaction(async (tx) => {
+    const entity = await entityRepository.create(tx);
+    const [row] = await tx
+      .insert(characters)
+      .values({ ...data, id: entity.id })
+      .returning();
+    return row;
+  });
 }
 
 async function update(
@@ -51,12 +63,13 @@ async function update(
   return row;
 }
 
+/**
+ * `characters.id` é FK de `entities.id` com `ON DELETE CASCADE`, então
+ * remover a entity é o que de fato apaga a linha de character (e, em
+ * cascata, seu inventory/items) — a exclusão sempre acontece pela raiz.
+ */
 async function remove(id: number): Promise<boolean> {
-  const deleted = await db
-    .delete(characters)
-    .where(eq(characters.id, id))
-    .returning({ id: characters.id });
-  return deleted.length > 0;
+  return entityRepository.remove(id);
 }
 
 export const characterRepository: CharacterRepository = {

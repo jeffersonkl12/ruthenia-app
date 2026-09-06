@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import { db } from "@/database";
+import { db, type DbExecutor } from "@/database";
 import { entities, type EntityRow } from "@/database/schemas/entity.schema";
 
 /**
@@ -9,19 +9,23 @@ import { entities, type EntityRow } from "@/database/schemas/entity.schema";
  * ids compartilhados por tabelas que "herdam" dela (padrão ECS / class-table
  * inheritance). Por isso a interface não estende {@link Repository} — não há
  * `findAll`/`findById`/`update` nem sentido em expor essa tabela via API.
+ *
+ * Ambos os métodos aceitam um `executor` opcional (o `db` global por
+ * padrão) para que uma tabela "filha" — ex. `character.repository.ts` —
+ * possa mintar/liberar o id dentro da própria transação da sua escrita.
  */
 export interface EntityRepository {
-  create(): Promise<EntityRow>;
-  remove(id: number): Promise<boolean>;
+  create(executor?: DbExecutor): Promise<EntityRow>;
+  remove(id: number, executor?: DbExecutor): Promise<boolean>;
 }
 
-async function create(): Promise<EntityRow> {
-  const [row] = await db.insert(entities).values({}).returning();
+async function create(executor: DbExecutor = db): Promise<EntityRow> {
+  const [row] = await executor.insert(entities).values({}).returning();
   return row;
 }
 
-async function remove(id: number): Promise<boolean> {
-  const deleted = await db
+async function remove(id: number, executor: DbExecutor = db): Promise<boolean> {
+  const deleted = await executor
     .delete(entities)
     .where(eq(entities.id, id))
     .returning({ id: entities.id });
