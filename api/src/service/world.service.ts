@@ -5,7 +5,7 @@ import { kingdomService } from "./kingdom.service";
 import { regionService } from "./region.service";
 import { locationService } from "./location.service";
 import { partyService } from "./party.service";
-import { entityService } from "./entity.service";
+import { characterService } from "./character.service";
 
 export interface WorldService {
   foundKingdom(
@@ -57,7 +57,7 @@ async function cloneKingdom(kingdomId: number): Promise<Kingdom> {
     clonedKingdom.id,
   );
 
-  await cloneEntitiesForKingdom(
+  await cloneCharactersForKingdom(
     sourceKingdom.id,
     clonedKingdom.id,
     clonedPartyIdByOriginalId,
@@ -84,29 +84,30 @@ async function clonePartiesForKingdom(
   return clonedIdByOriginalId;
 }
 
-async function cloneEntitiesForKingdom(
+async function cloneCharactersForKingdom(
   sourceKingdomId: number,
   clonedKingdomId: number,
   clonedPartyIdByOriginalId: Map<number, number>,
 ): Promise<void> {
-  const sourceEntities = await entityService.findByKingdomId(sourceKingdomId);
+  const sourceCharacters =
+    await characterService.findByKingdomId(sourceKingdomId);
 
-  for (const sourceEntity of sourceEntities) {
-    const clonedPartyId = sourceEntity.partyId
-      ? (clonedPartyIdByOriginalId.get(sourceEntity.partyId) ?? null)
+  for (const sourceCharacter of sourceCharacters) {
+    const clonedPartyId = sourceCharacter.partyId
+      ? (clonedPartyIdByOriginalId.get(sourceCharacter.partyId) ?? null)
       : null;
 
-    await entityService.create({
-      name: sourceEntity.name,
-      age: sourceEntity.age,
-      gender: sourceEntity.gender,
-      race: sourceEntity.race,
-      socialStatus: sourceEntity.socialStatus,
-      isPlayer: sourceEntity.isPlayer,
-      occupation: sourceEntity.occupation,
-      personality: sourceEntity.personality,
-      appearance: sourceEntity.appearance,
-      background: sourceEntity.background,
+    await characterService.create({
+      name: sourceCharacter.name,
+      age: sourceCharacter.age,
+      gender: sourceCharacter.gender,
+      race: sourceCharacter.race,
+      socialStatus: sourceCharacter.socialStatus,
+      isPlayer: sourceCharacter.isPlayer,
+      occupation: sourceCharacter.occupation,
+      personality: sourceCharacter.personality,
+      appearance: sourceCharacter.appearance,
+      background: sourceCharacter.background,
       kingdomId: clonedKingdomId,
       partyId: clonedPartyId,
     });
