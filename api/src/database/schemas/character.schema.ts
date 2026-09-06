@@ -9,6 +9,7 @@ import { parties } from "./party.schema";
 import { kingdoms } from "./kingdom.schema";
 import { regions } from "./region.schema";
 import { locations } from "./location.schema";
+import { entities } from "./entity.schema";
 
 export const characterGenderEnum = ["MALE", "FEMALE", "OTHER"] as const;
 
@@ -31,7 +32,12 @@ export const characterHealthStatusEnum = [
 ] as const;
 
 export const characters = sqliteTable("characters", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+  // PK compartilhada com `entities` (padrão ECS/class-table inheritance):
+  // todo Character é uma Entity. Quem gera o id é sempre `entities`, nunca
+  // esta tabela — por isso sem autoIncrement aqui.
+  id: integer("id")
+    .primaryKey()
+    .references(() => entities.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   age: integer("age").notNull(),
   gender: text("gender", { enum: characterGenderEnum }).notNull(),
@@ -65,14 +71,21 @@ export const characters = sqliteTable("characters", {
   ),
 });
 
+// `id` fica de fora dos dois: é sempre gerado internamente pelo repository
+// (via `entityRepository.create()`), nunca informado por quem chama, e
+// nunca reatribuível num update (quebraria o vínculo com a `entities`
+// correspondente).
 export const insertCharacterSchema = createInsertSchema(characters, {
   age: (schema) => schema.nonnegative(),
-});
+}).omit({ id: true });
 export const selectCharacterSchema = createSelectSchema(characters);
 export const updateCharacterSchema = createUpdateSchema(characters, {
   age: (schema) => schema.nonnegative(),
-});
+}).omit({ id: true });
 
 export type Character = typeof characters.$inferSelect;
+/** Forma crua de insert (com `id`), usada só dentro do repository. */
 export type NewCharacter = typeof characters.$inferInsert;
+/** Forma validada que o service recebe/repassa — sem `id`. */
+export type NewCharacterInput = z.infer<typeof insertCharacterSchema>;
 export type UpdateCharacter = z.infer<typeof updateCharacterSchema>;

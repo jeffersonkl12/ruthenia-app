@@ -13,6 +13,7 @@ import "dotenv/config";
 import { client, db } from "@/database";
 import {
   characters,
+  entities,
   kingdoms,
   locations,
   parties,
@@ -33,6 +34,7 @@ async function wipeAll(): Promise<void> {
   // FK off para poder apagar em lote (locations tem auto-referência).
   await client.execute("PRAGMA foreign_keys = OFF");
   await db.delete(characters);
+  await db.delete(entities);
   await db.delete(parties);
   await db.delete(locations);
   await db.delete(regions);

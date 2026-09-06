@@ -18,6 +18,7 @@
     "@langchain/langgraph": "^1.4.14",
     "@langchain/openai": "^1.5.11",
     "@libsql/client": "^0.18.0",
+    "@randsum/roller": "^4.0.0",
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-opener": "^2",
     "dotenv": "^17.4.2",
