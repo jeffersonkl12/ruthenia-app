@@ -1,5 +1,7 @@
 import {
   coerceMessageLikeToMessage,
+  HumanMessage,
+  RemoveMessage,
   SystemMessage,
   type BaseMessage,
   type BaseMessageChunk,
@@ -7,6 +9,7 @@ import {
 import { END, MemorySaver, START, StateGraph } from "@langchain/langgraph";
 import { AgentInvocationError, LlmError } from "@/llm/errors";
 import type { ChatModel } from "@/llm/providers";
+import { SUMMARIZE_PROMPT } from "@/llm/prompts";
 import {
   AgentStateAnnotation,
   type AgentState,
@@ -21,15 +24,43 @@ import type {
 } from "./agent.interface";
 
 /**
- * Agente base: um grafo LangGraph de nó único.
+ * Quantas mensagens anteriores (além da atual) ficam de fora da sumarização e
+ * são enviadas ao modelo na íntegra. Tudo o que passa disso é condensado em
+ * `state.summary` pelo nó `summarize` — ver {@link BaseAgent.summarizeHistory}.
+ */
+const RECENT_MESSAGE_WINDOW = 10;
+
+/** Rótulo legível do papel de uma mensagem, para o texto passado à sumarização. */
+function roleLabel(message: BaseMessage): string {
+  switch (message.getType()) {
+    case "human":
+      return "Usuário";
+    case "ai":
+      return "Assistente";
+    case "system":
+      return "Sistema";
+    default:
+      return message.getType();
+  }
+}
+
+/**
+ * Agente base: um grafo LangGraph de dois nós.
  *
  * ```
- * START ──▶ agent (chama o modelo) ──▶ END
+ * START ──▶ summarize (condensa histórico antigo) ──▶ agent (chama o modelo) ──▶ END
  * ```
  *
- * É deliberadamente mínimo. A evolução (ferramentas, roteamento condicional,
- * subgrafos do narrador) acontece adicionando nós e arestas neste grafo, sem
- * alterar o contrato {@link Agent}.
+ * `summarize` mantém a janela de contexto enviada ao modelo limitada às últimas
+ * {@link RECENT_MESSAGE_WINDOW} mensagens anteriores mais a atual: tudo o que
+ * ultrapassa essa janela é incorporado a `state.summary` (via LLM) e removido de
+ * `state.messages` com `RemoveMessage`, para que a conversa não cresça sem
+ * limite — nem no que é reenviado a cada chamada, nem no que fica persistido
+ * quando o checkpointer está ligado.
+ *
+ * Fora isso, o grafo é deliberadamente mínimo. A evolução (ferramentas,
+ * roteamento condicional, subgrafos do narrador) acontece adicionando nós e
+ * arestas, sem alterar o contrato {@link Agent}.
  */
 export class BaseAgent implements Agent {
   public readonly name: string;
@@ -44,19 +75,71 @@ export class BaseAgent implements Agent {
     this.name = spec.name;
 
     this.graph = new StateGraph(AgentStateAnnotation)
+      .addNode("summarize", (state) => this.summarizeHistory(state))
       .addNode("agent", (state) => this.callModel(state))
-      .addEdge(START, "agent")
+      .addEdge(START, "summarize")
+      .addEdge("summarize", "agent")
       .addEdge("agent", END)
       .compile({
         checkpointer: spec.enableMemory ? new MemorySaver() : undefined,
       });
   }
 
-  /** Nó `agent`: injeta o system prompt e chama o modelo. */
+  /**
+   * Nó `summarize`: se houver mais que {@link RECENT_MESSAGE_WINDOW} mensagens
+   * antes da atual, resume as mais antigas para `state.summary` e as remove de
+   * `state.messages`. Não faz nada (retorna `{}`) quando a janela ainda cabe.
+   */
+  private async summarizeHistory(state: AgentState): Promise<AgentStateUpdate> {
+    const { messages } = state;
+    const keepFrom = messages.length - (RECENT_MESSAGE_WINDOW + 1);
+    if (keepFrom <= 0) {
+      return {};
+    }
+
+    const toArchive = messages.slice(0, keepFrom);
+    const summary = await this.summarize(toArchive, state.summary);
+
+    return {
+      summary,
+      messages: toArchive.map(
+        (message) => new RemoveMessage({ id: message.id as string }),
+      ),
+    };
+  }
+
+  /** Chama o modelo para condensar `messages` no resumo contínuo da conversa. */
+  private async summarize(
+    messages: BaseMessage[],
+    previousSummary: string,
+  ): Promise<string> {
+    const transcript = messages
+      .map((message) => `${roleLabel(message)}: ${message.text}`)
+      .join("\n");
+
+    const prompt = SUMMARIZE_PROMPT.render({
+      previousSummary: previousSummary
+        ? `Resumo anterior:\n${previousSummary}`
+        : "",
+      transcript,
+    });
+
+    const response = await this.model.invoke([new HumanMessage(prompt)]);
+    return response.text.trim();
+  }
+
+  /** Nó `agent`: injeta o system prompt + resumo e chama o modelo. */
   private async callModel(state: AgentState): Promise<AgentStateUpdate> {
-    const history = state.systemPrompt
-      ? [new SystemMessage(state.systemPrompt), ...state.messages]
-      : state.messages;
+    const history: BaseMessage[] = [];
+    if (state.systemPrompt) {
+      history.push(new SystemMessage(state.systemPrompt));
+    }
+    if (state.summary) {
+      history.push(
+        new SystemMessage(`Resumo da conversa até aqui:\n${state.summary}`),
+      );
+    }
+    history.push(...state.messages);
 
     const response = await this.model.invoke(history);
     return { messages: [response] };
@@ -111,7 +194,13 @@ export class BaseAgent implements Agent {
       );
     }
 
-    for await (const [chunk] of stream) {
+    for await (const [chunk, metadata] of stream) {
+      // O nó `summarize` também chama o modelo; sem este filtro seus tokens
+      // vazariam para o stream junto com a resposta real do nó `agent`.
+      const nodeName = (metadata as { langgraph_node?: string } | undefined)
+        ?.langgraph_node;
+      if (nodeName && nodeName !== "agent") continue;
+
       const text = chunk?.text ?? "";
       if (text) yield { content: text };
     }
