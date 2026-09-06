@@ -10,7 +10,7 @@ import type { Repository } from "./repository.interface";
 
 export interface InventoryRepository
   extends Repository<Inventory, NewInventory, UpdateInventory> {
-  findByCharacterId(characterId: number): Promise<Inventory | undefined>;
+  findByEntityId(entityId: number): Promise<Inventory | undefined>;
 }
 
 async function findAll(): Promise<Inventory[]> {
@@ -25,13 +25,11 @@ async function findById(id: number): Promise<Inventory | undefined> {
   return row;
 }
 
-async function findByCharacterId(
-  characterId: number,
-): Promise<Inventory | undefined> {
+async function findByEntityId(entityId: number): Promise<Inventory | undefined> {
   const [row] = await db
     .select()
     .from(inventories)
-    .where(eq(inventories.characterId, characterId));
+    .where(eq(inventories.entityId, entityId));
   return row;
 }
 
@@ -63,7 +61,7 @@ async function remove(id: number): Promise<boolean> {
 export const inventoryRepository: InventoryRepository = {
   findAll,
   findById,
-  findByCharacterId,
+  findByEntityId,
   create,
   update,
   remove,

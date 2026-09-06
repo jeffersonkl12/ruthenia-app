@@ -4,11 +4,10 @@ import {
   type Inventory,
 } from "@/database/schemas/inventory.schema";
 import { inventoryRepository } from "@/repository/inventory.repository";
-import { characterRepository } from "@/repository/character.repository";
 import type { Service } from "./service.interface";
 
 export interface InventoryService extends Service<Inventory> {
-  findByCharacterId(characterId: number): Promise<Inventory | undefined>;
+  findByEntityId(entityId: number): Promise<Inventory | undefined>;
 }
 
 async function findAll(): Promise<Inventory[]> {
@@ -19,25 +18,20 @@ async function findById(id: number): Promise<Inventory | undefined> {
   return inventoryRepository.findById(id);
 }
 
-async function findByCharacterId(
-  characterId: number,
-): Promise<Inventory | undefined> {
-  return inventoryRepository.findByCharacterId(characterId);
+async function findByEntityId(entityId: number): Promise<Inventory | undefined> {
+  return inventoryRepository.findByEntityId(entityId);
 }
 
+// Sem checagem de existência do lado da entity aqui: a FK em
+// inventories.entityId já garante isso no banco. A checagem de "já tem
+// inventory" abaixo é sobre o invariante 1:1 em si, não sobre quem é o
+// dono — não depende de saber o que é um character.
 async function create(data: unknown): Promise<Inventory> {
   const parsed = insertInventorySchema.parse(data);
 
-  const character = await characterRepository.findById(parsed.characterId);
-  if (!character) {
-    throw new Error(`Character ${parsed.characterId} not found`);
-  }
-
-  const existing = await inventoryRepository.findByCharacterId(
-    parsed.characterId,
-  );
+  const existing = await inventoryRepository.findByEntityId(parsed.entityId);
   if (existing) {
-    throw new Error(`Character ${parsed.characterId} already has an inventory`);
+    throw new Error(`Entity ${parsed.entityId} already has an inventory`);
   }
 
   return inventoryRepository.create(parsed);
@@ -49,19 +43,10 @@ async function update(
 ): Promise<Inventory | undefined> {
   const parsed = updateInventorySchema.parse(data);
 
-  if (parsed.characterId !== undefined) {
-    const character = await characterRepository.findById(parsed.characterId);
-    if (!character) {
-      throw new Error(`Character ${parsed.characterId} not found`);
-    }
-
-    const existing = await inventoryRepository.findByCharacterId(
-      parsed.characterId,
-    );
+  if (parsed.entityId !== undefined) {
+    const existing = await inventoryRepository.findByEntityId(parsed.entityId);
     if (existing && existing.id !== id) {
-      throw new Error(
-        `Character ${parsed.characterId} already has an inventory`,
-      );
+      throw new Error(`Entity ${parsed.entityId} already has an inventory`);
     }
   }
 
@@ -75,7 +60,7 @@ async function remove(id: number): Promise<boolean> {
 export const inventoryService: InventoryService = {
   findAll,
   findById,
-  findByCharacterId,
+  findByEntityId,
   create,
   update,
   remove,
