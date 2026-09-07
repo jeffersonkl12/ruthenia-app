@@ -3,10 +3,15 @@ import { streamSSE } from "hono/streaming";
 import { systemPromptBuilder, type ModelRequest } from "@/llm";
 import { promptContextService } from "@/service/prompt-context.service";
 import { sessionService } from "@/service/session.service";
+import {
+  stateReflectionService,
+  type RecentMessage,
+} from "@/service/state-reflection.service";
 import { agentPool } from "./agent.pool";
 import {
   buildChunk,
   buildCompletion,
+  extractText,
   newCompletionId,
   splitSystem,
   toLangchainMessages,
@@ -14,9 +19,16 @@ import {
 import { parseModelId } from "./model-id";
 import type { ChatCompletionRequest } from "./openai.types";
 
+/** Quantas mensagens do histórico recente vão para a reflexão pós-turno. */
+const RECENT_MSG_LIMIT = 10;
+
 interface PreparedRequest {
   model: ModelRequest;
   systemPrompt: string;
+  /** Sessão ativa (única) — `undefined` enquanto não houver linha em `sessions`. */
+  sessionId?: number;
+  /** Últimas mensagens do jogador/mestre, para a reflexão de estado pós-turno. */
+  recentMessages: RecentMessage[];
   messages: ReturnType<typeof toLangchainMessages>;
 }
 
@@ -37,11 +49,12 @@ interface PreparedRequest {
  */
 async function buildSystemPrompt(
   clientSystem: string | undefined,
+  sessionId: number | undefined,
 ): Promise<string> {
-  const [session] = await sessionService.findAll();
-  const ctx = session
-    ? await promptContextService.buildContext(session.id)
-    : {};
+  const ctx =
+    sessionId != null
+      ? await promptContextService.buildContext(sessionId)
+      : {};
 
   const base = await systemPromptBuilder.build(ctx);
   return clientSystem ? `${base}\n\n${clientSystem}` : base;
@@ -51,6 +64,14 @@ async function buildSystemPrompt(
 async function prepare(body: ChatCompletionRequest): Promise<PreparedRequest> {
   const { provider, model } = parseModelId(body.model);
   const { system, rest } = splitSystem(body.messages ?? []);
+  const [session] = await sessionService.findAll();
+
+  const recentMessages: RecentMessage[] = rest
+    .slice(-RECENT_MSG_LIMIT)
+    .map((message) => ({
+      role: message.role === "assistant" ? "assistant" : "user",
+      content: extractText(message.content),
+    }));
 
   return {
     model: {
@@ -59,16 +80,39 @@ async function prepare(body: ChatCompletionRequest): Promise<PreparedRequest> {
       temperature: body.temperature,
       maxTokens: body.max_tokens,
     },
-    systemPrompt: await buildSystemPrompt(system),
+    systemPrompt: await buildSystemPrompt(system, session?.id),
+    sessionId: session?.id,
+    recentMessages,
     messages: toLangchainMessages(rest),
   };
 }
 
+/**
+ * Dispara a reflexão de estado narrativo pós-turno — fire-and-forget, nunca
+ * lança, não atrasa a resposta ao jogador. No-op se não há sessão ativa.
+ */
+function triggerStateReflection(
+  sessionId: number | undefined,
+  recentMessages: RecentMessage[],
+  finalReply: string,
+): void {
+  if (sessionId == null) return;
+  void stateReflectionService
+    .reflectAfterTurn({ sessionId, recentMessages, finalReply })
+    .catch((error: unknown) =>
+      console.error("[state-reflection] hook failed", error),
+    );
+}
+
 /** Resposta única (não-streaming). */
 export async function complete(body: ChatCompletionRequest) {
-  const { model, systemPrompt, messages } = await prepare(body);
+  const { model, systemPrompt, messages, sessionId, recentMessages } =
+    await prepare(body);
   const agent = await agentPool.get({ model });
   const result = await agent.invoke({ messages, systemPrompt });
+
+  triggerStateReflection(sessionId, recentMessages, result.content);
+
   return buildCompletion(result.content, body.model);
 }
 
@@ -84,7 +128,8 @@ export async function streamChat(
   c: Context,
   body: ChatCompletionRequest,
 ): Promise<Response> {
-  const { model, systemPrompt, messages } = await prepare(body);
+  const { model, systemPrompt, messages, sessionId, recentMessages } =
+    await prepare(body);
   const completionId = newCompletionId();
   const agent = await agentPool.get({ model });
 
@@ -92,7 +137,9 @@ export async function streamChat(
     c,
     async (sse) => {
       let first = true;
+      let assistantText = "";
       for await (const chunk of agent.stream({ messages, systemPrompt })) {
+        assistantText += chunk.content;
         await sse.writeSSE({
           data: JSON.stringify(
             buildChunk(chunk.content, body.model, { id: completionId, first }),
@@ -107,6 +154,8 @@ export async function streamChat(
         ),
       });
       await sse.writeSSE({ data: "[DONE]" });
+
+      triggerStateReflection(sessionId, recentMessages, assistantText);
     },
     async (err, sse) => {
       console.error(err);
