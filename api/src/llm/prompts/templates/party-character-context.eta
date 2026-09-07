@@ -1,0 +1,21 @@
+# Grupo e Personagens
+<% if (it.name) { %>
+
+## Party: <%= it.name %>
+
+<% } %>
+<% if (it.characters && it.characters.length) { %>
+
+## Personagens do Grupo
+<% for (const c of it.characters) { %>
+- <%= c.name %> (<%= c.occupation %>, <%= c.healthStatus %>) — FOR <%= c.strength %>, DES <%= c.dexterity %>, CON <%= c.constitution %>, INT <%= c.intelligence %>, SAB <%= c.wisdom %>, CAR <%= c.charisma %>
+
+<% } %>
+<% } %>
+<% if (it.npcs && it.npcs.length) { %>
+
+## NPCs do Grupo
+<% for (const n of it.npcs) { %>
+- <%= n.name %> (<%= n.occupation %>, <%= n.healthStatus %>)
+<% } %>
+<% } %>

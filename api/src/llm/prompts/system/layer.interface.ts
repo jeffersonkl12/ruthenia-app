@@ -21,18 +21,37 @@ export type LayerKind = "static" | "dynamic";
  * Estado do mundo entregue às camadas `dynamic` no momento do build.
  *
  * `session`, `scene`, `location` e `region` alimentam a camada
- * `world-state-snapshot`. Nenhum call site de `systemPromptBuilder.build()`
- * popula esses campos ainda — ficam `undefined` até a busca real (sessão ativa,
- * party, personagens, location/region atuais) ser implementada. Ganha mais
- * campos opcionais — `party`, `npcs`, ... — conforme outras camadas dinâmicas
- * forem entrando.
+ * `world-state-snapshot`; `party` alimenta a camada `party-character-context`.
+ * Nenhum call site de `systemPromptBuilder.build()` popula esses campos ainda —
+ * ficam `undefined` até a busca real (sessão ativa, party, personagens,
+ * location/region atuais) ser implementada. Ganha mais campos opcionais —
+ * `npcs` avulsos, modo da sessão, ... — conforme outras camadas dinâmicas forem
+ * entrando.
  */
 export interface SystemPromptContext {
   session?: { name: string; mode: "NARRATIVE" | "COMBAT" };
   scene?: { title: string; description?: string };
   location?: { name: string; type: string };
   region?: { name: string; biome: string };
+  party?: {
+    name: string;
+    characters: PartyCharacterSummary[];
+    npcs: PartyCharacterSummary[];
+  };
   [key: string]: unknown;
+}
+
+/** Resumo de um personagem (jogável ou NPC) usado pela camada `party-character-context`. */
+export interface PartyCharacterSummary {
+  name: string;
+  occupation: string;
+  healthStatus: "HEALTHY" | "SICK" | "INJURED" | "INCAPACITATED" | "DEAD";
+  strength: number;
+  dexterity: number;
+  constitution: number;
+  intelligence: number;
+  wisdom: number;
+  charisma: number;
 }
 
 interface BaseLayer {
