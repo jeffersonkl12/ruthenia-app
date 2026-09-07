@@ -10,3 +10,4 @@ export * from "./session.service";
 export * from "./engine.service";
 export * from "./world.service";
 export * from "./map.service";
+export * from "./prompt-context.service";
