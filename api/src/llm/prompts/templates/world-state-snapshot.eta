@@ -1,10 +1,10 @@
 # Estado Atual do Mundo
-<% if (it.session) { %>
+<% if (it.kingdom) { %>
 
-## Sessão
-- Nome: <%= it.session.name %>
+## Reino
+- Nome: <%= it.kingdom.name %>
 
-- Modo: <%= it.session.mode %>
+- Status: <%= it.kingdom.status %>
 
 <% } %>
 <% if (it.region) { %>
@@ -12,7 +12,17 @@
 ## Região
 - Nome: <%= it.region.name %>
 
+<% if (it.region.description) { %>
+- Descrição: <%= it.region.description %>
+
+<% } %>
 - Bioma: <%= it.region.biome %>
+
+- Status: <%= it.region.status %>
+
+- Riqueza: <%= it.region.wealth %>
+
+- Infraestrutura: <%= it.region.infrastructure %>
 
 <% } %>
 <% if (it.location) { %>
@@ -22,4 +32,8 @@
 
 - Tipo: <%= it.location.type %>
 
+<% if (it.location.description) { %>
+- Descrição: <%= it.location.description %>
+
+<% } %>
 <% } %>

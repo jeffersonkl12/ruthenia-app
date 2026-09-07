@@ -1,24 +1,33 @@
 # Cena Atual
-<% if (it.mode) { %>
+<% if (it.session) { %>
 
-## Modo: <%= it.mode %>
+## Sessão
+- Nome: <%= it.session.name %>
+<% if (it.session.description) { %>
+- Descrição: <%= it.session.description %>
+<% } %>
 
 <% } %>
-<% if (it.title) { %>
-- Título: <%= it.title %>
+<% if (it.name || it.description || it.mode) { %>
 
+## Cena
+<% if (it.name) { %>
+- Nome: <%= it.name %>
 <% } %>
 <% if (it.description) { %>
 - Descrição: <%= it.description %>
+<% } %>
+<% if (it.mode) { %>
+- Modo: <%= it.mode %>
+<% } %>
 
 <% } %>
-<% if (it.mode === "COMBAT" && it.combat) { %>
+<% if (it.nearbyNpcs && it.nearbyNpcs.length) { %>
 
-## Combate
-- Rodada: <%= it.combat.round %>
-
-<% if (it.combat.activeCombatant) { %>
-- Turno de: <%= it.combat.activeCombatant %>
+## NPCs Próximos
+_Presentes na mesma localização que o grupo — não necessariamente interagindo._
+<% for (const npc of it.nearbyNpcs) { %>
+- <%= npc.name %> (<%= npc.occupation %>)<% if (npc.appearance) { %> — <%= npc.appearance %><% } %>
 <% } %>
 
 <% } %>

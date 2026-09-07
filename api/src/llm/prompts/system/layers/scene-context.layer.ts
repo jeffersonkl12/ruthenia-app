@@ -1,10 +1,12 @@
 import { etaDynamicLayer } from "../dynamic.layer";
 
 /**
- * Quinta camada do system prompt: estado completo da cena atual — modo
- * (combate/diálogo/exploração) e detalhes específicos dele. Dinâmica — só
- * aparece quando `ctx.scene` é fornecido a `systemPromptBuilder.build(ctx)`;
- * hoje nenhum call site faz isso ainda, então a camada renderiza vazia.
+ * Quinta camada do system prompt: estado completo da cena atual — nome da
+ * sessão, nome/descrição da cena, modo (combate/diálogo/exploração), NPCs
+ * próximos (mesmo local que o grupo) e detalhes específicos do modo.
+ * Dinâmica — só aparece quando `ctx.scene` é fornecido a
+ * `systemPromptBuilder.build(ctx)`; hoje nenhum call site faz isso ainda,
+ * então a camada renderiza vazia.
  */
 export const sceneContextLayer = etaDynamicLayer({
   id: "scene-context",

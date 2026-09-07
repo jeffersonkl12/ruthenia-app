@@ -27,6 +27,7 @@ export const regionBiomeEnum = [
 export const regions = sqliteTable("regions", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name").notNull(),
+  description: text("description"),
   status: text("status", { enum: regionStatusEnum })
     .notNull()
     .default("STABLE"),

@@ -7,3 +7,4 @@ export * from "./character.schema";
 export * from "./inventory.schema";
 export * from "./item.schema";
 export * from "./session.schema";
+export * from "./scene.schema";

@@ -11,10 +11,11 @@ import { characterService } from "./character.service";
 import { characterRepository } from "@/repository/character.repository";
 import { locationService } from "./location.service";
 import { regionService } from "./region.service";
+import { kingdomService } from "./kingdom.service";
 
 type WorldStateSnapshotContext = Pick<
   SystemPromptContext,
-  "session" | "location" | "region"
+  "kingdom" | "location" | "region"
 >;
 
 type PartyCharacterContext = Pick<SystemPromptContext, "party">;
@@ -22,7 +23,7 @@ type PartyCharacterContext = Pick<SystemPromptContext, "party">;
 export interface PromptContextService {
   /**
    * Monta o recorte de {@link SystemPromptContext} consumido pela camada
-   * `world-state-snapshot`: sessão, e localização/região atuais.
+   * `world-state-snapshot`: reino da sessão e localização/região atuais.
    */
   buildWorldStateSnapshot(
     sessionId: number,
@@ -61,9 +62,12 @@ async function buildWorldStateSnapshot(
 ): Promise<WorldStateSnapshotContext> {
   const { session, party } = await resolveSessionAndParty(sessionId);
 
-  const ctx: WorldStateSnapshotContext = {
-    session: { name: session.name, mode: session.mode },
-  };
+  const ctx: WorldStateSnapshotContext = {};
+
+  const kingdom = await kingdomService.findById(session.kingdomId);
+  if (kingdom) {
+    ctx.kingdom = { name: kingdom.name, status: kingdom.status };
+  }
 
   if (!party?.leaderId) {
     return ctx;
@@ -77,14 +81,25 @@ async function buildWorldStateSnapshot(
   if (leader.currentRegionId) {
     const region = await regionService.findById(leader.currentRegionId);
     if (region) {
-      ctx.region = { name: region.name, biome: region.biome };
+      ctx.region = {
+        name: region.name,
+        description: region.description,
+        biome: region.biome,
+        status: region.status,
+        wealth: region.wealth,
+        infrastructure: region.infrastructure,
+      };
     }
   }
 
   if (leader.currentLocationId) {
     const location = await locationService.findById(leader.currentLocationId);
     if (location) {
-      ctx.location = { name: location.name, type: location.type };
+      ctx.location = {
+        name: location.name,
+        type: location.type,
+        description: location.description,
+      };
     }
   }
 
@@ -95,13 +110,14 @@ function toPartyCharacterSummary(character: Character): PartyCharacterSummary {
   return {
     name: character.name,
     occupation: character.occupation,
+    age: character.age,
+    gender: character.gender,
+    race: character.race,
+    socialStatus: character.socialStatus,
     healthStatus: character.healthStatus,
-    strength: character.strength,
-    dexterity: character.dexterity,
-    constitution: character.constitution,
-    intelligence: character.intelligence,
-    wisdom: character.wisdom,
-    charisma: character.charisma,
+    personality: character.personality,
+    appearance: character.appearance,
+    background: character.background,
   };
 }
 

@@ -7,13 +7,48 @@
 <% if (it.leader) { %>
 
 ## Líder do Grupo
-- <%= it.leader.name %> (<%= it.leader.occupation %>, <%= it.leader.healthStatus %>) — FOR <%= it.leader.strength %>, DES <%= it.leader.dexterity %>, CON <%= it.leader.constitution %>, INT <%= it.leader.intelligence %>, SAB <%= it.leader.wisdom %>, CAR <%= it.leader.charisma %>
+### <%= it.leader.name %>
+- Ocupação: <%= it.leader.occupation %>
+
+- Idade: <%= it.leader.age %>
+
+- Gênero: <%= it.leader.gender %>
+
+- Raça: <%= it.leader.race %>
+
+- Status social: <%= it.leader.socialStatus %>
+
+- Saúde: <%= it.leader.healthStatus %>
+
+- Personalidade: <%= it.leader.personality %>
+
+- Aparência: <%= it.leader.appearance %>
+
+- Background: <%= it.leader.background %>
 
 <% } %>
 <% if (it.npcs && it.npcs.length) { %>
 
 ## NPCs do Grupo
 <% for (const n of it.npcs) { %>
-- <%= n.name %> (<%= n.occupation %>, <%= n.healthStatus %>)
+### <%= n.name %>
+- Ocupação: <%= n.occupation %>
+
+- Idade: <%= n.age %>
+
+- Gênero: <%= n.gender %>
+
+- Raça: <%= n.race %>
+
+- Status social: <%= n.socialStatus %>
+
+- Saúde: <%= n.healthStatus %>
+
+- Personalidade: <%= n.personality %>
+
+- Aparência: <%= n.appearance %>
+
+- Background: <%= n.background %>
+
 <% } %>
 <% } %>

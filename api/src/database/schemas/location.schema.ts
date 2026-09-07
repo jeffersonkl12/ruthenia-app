@@ -22,6 +22,7 @@ export const locations = sqliteTable("locations", {
     (): AnySQLiteColumn => locations.id,
   ),
   type: text("type").notNull(),
+  description: text("description"),
 });
 
 export const insertLocationSchema = createInsertSchema(locations);

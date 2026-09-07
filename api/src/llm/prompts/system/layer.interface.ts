@@ -9,7 +9,7 @@
  *   contexto, pelo interpolador simples `{{chave}}` ({@link TemplatePrompt},
  *   arquivos `.md`); o resultado nunca muda entre requisições.
  * - `dynamic`: texto derivado do estado do mundo (party, location, NPCs, modo da
- *   sessão). Recebe um {@link SystemPromptContext} e é renderizada a cada build,
+ *   cena). Recebe um {@link SystemPromptContext} e é renderizada a cada build,
  *   via template Eta (`.eta`, laços/condicionais) — ver {@link etaDynamicLayer}.
  *
  * Adicionar uma camada = criar o módulo dela + incluí-la em
@@ -20,13 +20,13 @@ export type LayerKind = "static" | "dynamic";
 /**
  * Estado do mundo entregue às camadas `dynamic` no momento do build.
  *
- * `session`, `location` e `region` alimentam a camada `world-state-snapshot`;
- * `party` alimenta `party-character-context`; `scene` alimenta
- * `scene-context`; `dmSecrets` alimenta `dm-secrets`. Nenhum call site de
- * `systemPromptBuilder.build()` popula esses campos ainda — ficam `undefined`
- * até a busca real (sessão ativa, party, personagens, location/region/cena
- * atuais) ser implementada. Ganha mais campos opcionais conforme outras
- * camadas dinâmicas forem entrando.
+ * `kingdom`, `location` e `region` alimentam a camada `world-state-snapshot`;
+ * `party` alimenta `party-character-context`; `scene` (que carrega também o
+ * nome da sessão) alimenta `scene-context`; `dmSecrets` alimenta `dm-secrets`.
+ * Nenhum call site de `systemPromptBuilder.build()` popula esses campos ainda
+ * — ficam `undefined` até a busca real (sessão ativa, party, personagens,
+ * location/region/cena atuais) ser implementada. Ganha mais campos opcionais
+ * conforme outras camadas dinâmicas forem entrando.
  *
  * Regra de domínio: uma party tem sempre **um único líder**, e esse líder é
  * sempre o personagem do jogador (`isPlayer: true`) — o jogo não é
@@ -34,10 +34,17 @@ export type LayerKind = "static" | "dynamic";
  * os outros membros são NPCs (`isPlayer: false`).
  */
 export interface SystemPromptContext {
-  session?: { name: string; mode: "NARRATIVE" | "COMBAT" };
   scene?: SceneContext;
-  location?: { name: string; type: string };
-  region?: { name: string; biome: string };
+  kingdom?: { name: string; status: "PEACE" | "CIVIL_WAR" | "CRISIS" };
+  location?: { name: string; type: string; description?: string | null };
+  region?: {
+    name: string;
+    description?: string | null;
+    biome: string;
+    status: "STABLE" | "UNREST" | "OCCUPIED" | "DEVASTATED";
+    wealth: number;
+    infrastructure: number;
+  };
   party?: {
     name: string;
     /** O personagem do jogador — único líder da party, nunca um NPC. */
@@ -65,25 +72,41 @@ export type SceneMode = "COMBAT" | "DIALOGUE" | "EXPLORATION";
 /** Estado completo da cena atual, consumido pela camada `scene-context`. */
 export interface SceneContext {
   mode: SceneMode;
-  title?: string;
-  description?: string;
+  /** Nome da cena (coluna `scenes.name`). */
+  name?: string;
+  /** Descrição da cena (coluna `scenes.description`). */
+  description?: string | null;
+  /** Sessão à qual a cena pertence (colunas `sessions.name` / `sessions.description`). */
+  session?: { name: string; description?: string | null };
+  /**
+   * NPCs na mesma localização que o grupo — apenas presentes no local, não
+   * necessariamente interagindo. NPCs da própria party ficam em
+   * `party-character-context`, não aqui.
+   */
+  nearbyNpcs?: { name: string; occupation: string; appearance?: string }[];
   /** Presente só quando `mode === "COMBAT"`. */
   combat?: { round: number; activeCombatant?: string };
   /** Presente só quando `mode === "DIALOGUE"`. */
   dialogue?: { npc: string; topic?: string };
 }
 
-/** Resumo de um personagem (líder ou NPC) usado pela camada `party-character-context`. */
+/**
+ * Resumo de um personagem (líder ou NPC) usado pela camada
+ * `party-character-context`. Só o retrato de roleplay — personalidade,
+ * aparência, background e afins; atributos (FOR/DES/...) ficam de fora de
+ * propósito.
+ */
 export interface PartyCharacterSummary {
   name: string;
   occupation: string;
+  age: number;
+  gender: "MALE" | "FEMALE" | "OTHER";
+  race: "HUMAN";
+  socialStatus: "NOBLE" | "COMMONER" | "MERCHANT" | "CLERGY" | "SLAVE";
   healthStatus: "HEALTHY" | "SICK" | "INJURED" | "INCAPACITATED" | "DEAD";
-  strength: number;
-  dexterity: number;
-  constitution: number;
-  intelligence: number;
-  wisdom: number;
-  charisma: number;
+  personality: string;
+  appearance: string;
+  background: string;
 }
 
 interface BaseLayer {
