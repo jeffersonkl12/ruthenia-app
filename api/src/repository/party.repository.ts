@@ -11,6 +11,7 @@ import type { Repository } from "./repository.interface";
 export interface PartyRepository
   extends Repository<Party, NewParty, UpdateParty> {
   findByKingdomId(kingdomId: number): Promise<Party[]>;
+  findByLeaderId(characterId: number): Promise<Party | undefined>;
 }
 
 async function findAll(): Promise<Party[]> {
@@ -24,6 +25,14 @@ async function findById(id: number): Promise<Party | undefined> {
 
 async function findByKingdomId(kingdomId: number): Promise<Party[]> {
   return db.select().from(parties).where(eq(parties.kingdomId, kingdomId));
+}
+
+async function findByLeaderId(characterId: number): Promise<Party | undefined> {
+  const [row] = await db
+    .select()
+    .from(parties)
+    .where(eq(parties.leaderId, characterId));
+  return row;
 }
 
 async function create(data: NewParty): Promise<Party> {
@@ -55,6 +64,7 @@ export const partyRepository: PartyRepository = {
   findAll,
   findById,
   findByKingdomId,
+  findByLeaderId,
   create,
   update,
   remove,

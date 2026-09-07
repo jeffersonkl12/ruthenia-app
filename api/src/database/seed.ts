@@ -117,7 +117,7 @@ async function buildWorld() {
   });
 
   // --- Personagens ---
-  await characterService.create({
+  const kaelen = await characterService.create({
     name: "Kaelen Vharr",
     age: 27,
     gender: "MALE",
@@ -134,6 +134,7 @@ async function buildWorld() {
     currentRegionId: pedralida.id,
     currentLocationId: corvoCansado.id,
   });
+  await partyService.setLeader(party.id, kaelen.id);
 
   await characterService.create({
     name: "Bruna Sétepunhos",

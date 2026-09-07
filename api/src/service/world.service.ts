@@ -118,7 +118,7 @@ async function cloneCharactersForKingdom(
       ? (clonedPartyIdByOriginalId.get(sourceCharacter.partyId) ?? null)
       : null;
 
-    await characterService.create({
+    const clonedCharacter = await characterService.create({
       name: sourceCharacter.name,
       age: sourceCharacter.age,
       gender: sourceCharacter.gender,
@@ -138,6 +138,10 @@ async function cloneCharactersForKingdom(
       kingdomId: clonedKingdomId,
       partyId: clonedPartyId,
     });
+
+    if (sourceCharacter.isPlayer && clonedPartyId) {
+      await partyService.setLeader(clonedPartyId, clonedCharacter.id);
+    }
   }
 }
 
