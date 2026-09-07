@@ -4,13 +4,11 @@
 ## Party: <%= it.name %>
 
 <% } %>
-<% if (it.characters && it.characters.length) { %>
+<% if (it.leader) { %>
 
-## Personagens do Grupo
-<% for (const c of it.characters) { %>
-- <%= c.name %> (<%= c.occupation %>, <%= c.healthStatus %>) — FOR <%= c.strength %>, DES <%= c.dexterity %>, CON <%= c.constitution %>, INT <%= c.intelligence %>, SAB <%= c.wisdom %>, CAR <%= c.charisma %>
+## Líder do Grupo
+- <%= it.leader.name %> (<%= it.leader.occupation %>, <%= it.leader.healthStatus %>) — FOR <%= it.leader.strength %>, DES <%= it.leader.dexterity %>, CON <%= it.leader.constitution %>, INT <%= it.leader.intelligence %>, SAB <%= it.leader.wisdom %>, CAR <%= it.leader.charisma %>
 
-<% } %>
 <% } %>
 <% if (it.npcs && it.npcs.length) { %>
 

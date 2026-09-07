@@ -25,8 +25,12 @@ export type LayerKind = "static" | "dynamic";
  * Nenhum call site de `systemPromptBuilder.build()` popula esses campos ainda —
  * ficam `undefined` até a busca real (sessão ativa, party, personagens,
  * location/region atuais) ser implementada. Ganha mais campos opcionais —
- * `npcs` avulsos, modo da sessão, ... — conforme outras camadas dinâmicas forem
- * entrando.
+ * modo da sessão, ... — conforme outras camadas dinâmicas forem entrando.
+ *
+ * Regra de domínio: uma party tem sempre **um único líder**, e esse líder é
+ * sempre o personagem do jogador (`isPlayer: true`) — o jogo não é
+ * multiplayer, então nunca há mais de um personagem jogável por party. Todos
+ * os outros membros são NPCs (`isPlayer: false`).
  */
 export interface SystemPromptContext {
   session?: { name: string; mode: "NARRATIVE" | "COMBAT" };
@@ -35,13 +39,14 @@ export interface SystemPromptContext {
   region?: { name: string; biome: string };
   party?: {
     name: string;
-    characters: PartyCharacterSummary[];
+    /** O personagem do jogador — único líder da party, nunca um NPC. */
+    leader: PartyCharacterSummary;
     npcs: PartyCharacterSummary[];
   };
   [key: string]: unknown;
 }
 
-/** Resumo de um personagem (jogável ou NPC) usado pela camada `party-character-context`. */
+/** Resumo de um personagem (líder ou NPC) usado pela camada `party-character-context`. */
 export interface PartyCharacterSummary {
   name: string;
   occupation: string;
