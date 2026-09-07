@@ -22,10 +22,11 @@ export type LayerKind = "static" | "dynamic";
  *
  * `session`, `location` e `region` alimentam a camada `world-state-snapshot`;
  * `party` alimenta `party-character-context`; `scene` alimenta
- * `scene-context`. Nenhum call site de `systemPromptBuilder.build()` popula
- * esses campos ainda — ficam `undefined` até a busca real (sessão ativa,
- * party, personagens, location/region/cena atuais) ser implementada. Ganha
- * mais campos opcionais conforme outras camadas dinâmicas forem entrando.
+ * `scene-context`; `dmSecrets` alimenta `dm-secrets`. Nenhum call site de
+ * `systemPromptBuilder.build()` popula esses campos ainda — ficam `undefined`
+ * até a busca real (sessão ativa, party, personagens, location/region/cena
+ * atuais) ser implementada. Ganha mais campos opcionais conforme outras
+ * camadas dinâmicas forem entrando.
  *
  * Regra de domínio: uma party tem sempre **um único líder**, e esse líder é
  * sempre o personagem do jogador (`isPlayer: true`) — o jogo não é
@@ -43,7 +44,19 @@ export interface SystemPromptContext {
     leader: PartyCharacterSummary;
     npcs: PartyCharacterSummary[];
   };
+  dmSecrets?: DmSecretsContext;
   [key: string]: unknown;
+}
+
+/**
+ * Meta-informação só para o mestre — nunca deve vazar para o jogador.
+ * Consumida pela camada `dm-secrets`.
+ */
+export interface DmSecretsContext {
+  /** Notas livres do mestre — lembretes, pistas planejadas, direção da história. */
+  notes?: string;
+  /** Segredos pontuais, cada um com um rótulo curto e o conteúdo. */
+  secrets?: { label: string; detail: string }[];
 }
 
 /** Modo da cena atual, usado pela camada `scene-context`. */
