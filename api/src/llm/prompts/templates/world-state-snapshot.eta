@@ -1,0 +1,34 @@
+# Estado Atual do Mundo
+<% if (it.session) { %>
+
+## Sessão
+- Nome: <%= it.session.name %>
+
+- Modo: <%= it.session.mode %>
+
+<% } %>
+<% if (it.region) { %>
+
+## Região
+- Nome: <%= it.region.name %>
+
+- Bioma: <%= it.region.biome %>
+
+<% } %>
+<% if (it.location) { %>
+
+## Localização
+- Nome: <%= it.location.name %>
+
+- Tipo: <%= it.location.type %>
+
+<% } %>
+<% if (it.scene) { %>
+
+## Cena Atual
+- Título: <%= it.scene.title %>
+
+<% if (it.scene.description) { %>- Descrição: <%= it.scene.description %>
+
+<% } %>
+<% } %>

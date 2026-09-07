@@ -20,11 +20,18 @@ export type LayerKind = "static" | "dynamic";
 /**
  * Estado do mundo entregue às camadas `dynamic` no momento do build.
  *
- * Vazio nesta fase (só existe a camada `identity`, que é `static`). Ganha campos
- * opcionais — `party`, `location`, `npcs`, `session`, ... — conforme as camadas
- * dinâmicas forem entrando.
+ * `session`, `scene`, `location` e `region` alimentam a camada
+ * `world-state-snapshot`. Nenhum call site de `systemPromptBuilder.build()`
+ * popula esses campos ainda — ficam `undefined` até a busca real (sessão ativa,
+ * party, personagens, location/region atuais) ser implementada. Ganha mais
+ * campos opcionais — `party`, `npcs`, ... — conforme outras camadas dinâmicas
+ * forem entrando.
  */
 export interface SystemPromptContext {
+  session?: { name: string; mode: "NARRATIVE" | "COMBAT" };
+  scene?: { title: string; description?: string };
+  location?: { name: string; type: string };
+  region?: { name: string; biome: string };
   [key: string]: unknown;
 }
 
