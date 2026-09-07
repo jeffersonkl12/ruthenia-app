@@ -23,10 +23,12 @@ export type LayerKind = "static" | "dynamic";
  * `kingdom`, `location` e `region` alimentam a camada `world-state-snapshot`;
  * `party` alimenta `party-character-context`; `scene` (que carrega também o
  * nome da sessão) alimenta `scene-context`; `dmSecrets` alimenta `dm-secrets`.
- * Nenhum call site de `systemPromptBuilder.build()` popula esses campos ainda
- * — ficam `undefined` até a busca real (sessão ativa, party, personagens,
- * location/region/cena atuais) ser implementada. Ganha mais campos opcionais
- * conforme outras camadas dinâmicas forem entrando.
+ *
+ * `promptContextService.buildContext(sessionId)` monta este objeto a partir do
+ * banco (menos `dmSecrets`, que ainda não tem storage) e o `chat.controller`
+ * passa o resultado para `systemPromptBuilder.build(ctx)` a cada mensagem.
+ * `agent.factory.createDefault` ainda chama sem argumento (só as camadas
+ * `static`), útil como fallback fora do fluxo de chat.
  *
  * Regra de domínio: uma party tem sempre **um único líder**, e esse líder é
  * sempre o personagem do jogador (`isPlayer: true`) — o jogo não é

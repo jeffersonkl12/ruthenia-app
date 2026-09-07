@@ -148,7 +148,7 @@ export class BaseAgent implements Agent {
   private buildInitialState(input: AgentInput): AgentStateUpdate {
     return {
       messages: input.messages.map(coerceMessageLikeToMessage),
-      systemPrompt: this.spec.systemPrompt ?? "",
+      systemPrompt: input.systemPrompt ?? this.spec.systemPrompt ?? "",
       metadata: input.metadata ?? {},
     };
   }

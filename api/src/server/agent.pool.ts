@@ -1,18 +1,22 @@
-import { createHash } from "node:crypto";
 import { agentFactory, type Agent, type ModelRequest } from "@/llm";
 
 export interface PooledAgentSpec {
   model: ModelRequest;
-  systemPrompt: string;
 }
 
 /**
- * Cache de agentes por (provedor + modelo + temperatura + system prompt).
+ * Cache de agentes por config de modelo (provedor + modelo + temperatura +
+ * maxTokens).
  *
  * Compilar o grafo LangGraph e instanciar o chat model a cada requisição HTTP
- * seria desperdício — a LibreChat reenvia o histórico inteiro toda vez, mas a
- * configuração do agente muda pouco. O cache guarda a `Promise<Agent>` para que
- * requisições concorrentes com a mesma chave compartilhem a mesma criação.
+ * seria desperdício. O grafo do `BaseAgent` **não depende do system prompt** —
+ * este entra por invocação (`AgentInput.systemPrompt`), remontado a cada
+ * mensagem a partir do estado do mundo. A única coisa que exige um agente novo
+ * é a config do modelo, então a chave do cache é só ela: o keyspace fica
+ * limitado ao punhado de combinações de modelo em uso, sem agentes fantasma.
+ *
+ * O cache guarda a `Promise<Agent>` para que requisições concorrentes com a
+ * mesma chave compartilhem a mesma criação.
  */
 export class AgentPool {
   private static instance: AgentPool;
@@ -36,7 +40,6 @@ export class AgentPool {
         .create({
           name: `librechat:${spec.model.provider ?? "default"}`,
           model: spec.model,
-          systemPrompt: spec.systemPrompt,
         })
         .catch((error: unknown) => {
           // Não deixa uma criação falha "grudar" no cache.
@@ -52,17 +55,12 @@ export class AgentPool {
     this.agents.clear();
   }
 
-  private static keyOf({ model, systemPrompt }: PooledAgentSpec): string {
-    const promptHash = createHash("sha1")
-      .update(systemPrompt)
-      .digest("hex")
-      .slice(0, 12);
+  private static keyOf({ model }: PooledAgentSpec): string {
     return [
       model.provider ?? "default",
       model.model ?? "default",
       model.temperature ?? "default",
       model.maxTokens ?? "default",
-      promptHash,
     ].join("|");
   }
 }

@@ -13,6 +13,7 @@ export interface CharacterRepository
   extends Repository<Character, NewCharacterInput, UpdateCharacter> {
   findByPartyId(partyId: number): Promise<Character[]>;
   findByKingdomId(kingdomId: number): Promise<Character[]>;
+  findByLocationId(locationId: number): Promise<Character[]>;
 }
 
 async function findAll(): Promise<Character[]> {
@@ -33,6 +34,13 @@ async function findByKingdomId(kingdomId: number): Promise<Character[]> {
     .select()
     .from(characters)
     .where(eq(characters.kingdomId, kingdomId));
+}
+
+async function findByLocationId(locationId: number): Promise<Character[]> {
+  return db
+    .select()
+    .from(characters)
+    .where(eq(characters.currentLocationId, locationId));
 }
 
 /**
@@ -77,6 +85,7 @@ export const characterRepository: CharacterRepository = {
   findById,
   findByPartyId,
   findByKingdomId,
+  findByLocationId,
   create,
   update,
   remove,

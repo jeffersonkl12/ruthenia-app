@@ -1,6 +1,8 @@
 import type { Context } from "hono";
 import { streamSSE } from "hono/streaming";
 import { systemPromptBuilder, type ModelRequest } from "@/llm";
+import { promptContextService } from "@/service/prompt-context.service";
+import { sessionService } from "@/service/session.service";
 import { agentPool } from "./agent.pool";
 import {
   buildChunk,
@@ -18,6 +20,33 @@ interface PreparedRequest {
   messages: ReturnType<typeof toLangchainMessages>;
 }
 
+/**
+ * Monta o system prompt do agente para esta requisição.
+ *
+ * A LibreChat reenvia o histórico inteiro a cada turno, então "uma
+ * requisição" == "uma nova mensagem": remontamos o prompt do zero toda vez.
+ * Busca o estado do mundo da sessão ativa (única — jogo single-player) via
+ * {@link promptContextService.buildContext} e renderiza as camadas com o
+ * {@link systemPromptBuilder}. O prompt vai por invocação (`AgentInput`), não
+ * embutido no agente: o {@link AgentPool} cacheia o agente por config de
+ * modelo, então remontar o prompt a cada turno não recompila nada.
+ *
+ * Um `system` message vindo do cliente é anexado ao final, preservando
+ * instruções custom da LibreChat. Sem sessão no banco ainda → cai para o
+ * prompt estático (só as camadas `static`).
+ */
+async function buildSystemPrompt(
+  clientSystem: string | undefined,
+): Promise<string> {
+  const [session] = await sessionService.findAll();
+  const ctx = session
+    ? await promptContextService.buildContext(session.id)
+    : {};
+
+  const base = await systemPromptBuilder.build(ctx);
+  return clientSystem ? `${base}\n\n${clientSystem}` : base;
+}
+
 /** Traduz o corpo OpenAI numa configuração de agente + mensagens do LangChain. */
 async function prepare(body: ChatCompletionRequest): Promise<PreparedRequest> {
   const { provider, model } = parseModelId(body.model);
@@ -30,7 +59,7 @@ async function prepare(body: ChatCompletionRequest): Promise<PreparedRequest> {
       temperature: body.temperature,
       maxTokens: body.max_tokens,
     },
-    systemPrompt: system ?? (await systemPromptBuilder.build()),
+    systemPrompt: await buildSystemPrompt(system),
     messages: toLangchainMessages(rest),
   };
 }
@@ -38,8 +67,8 @@ async function prepare(body: ChatCompletionRequest): Promise<PreparedRequest> {
 /** Resposta única (não-streaming). */
 export async function complete(body: ChatCompletionRequest) {
   const { model, systemPrompt, messages } = await prepare(body);
-  const agent = await agentPool.get({ model, systemPrompt });
-  const result = await agent.invoke({ messages });
+  const agent = await agentPool.get({ model });
+  const result = await agent.invoke({ messages, systemPrompt });
   return buildCompletion(result.content, body.model);
 }
 
@@ -57,13 +86,13 @@ export async function streamChat(
 ): Promise<Response> {
   const { model, systemPrompt, messages } = await prepare(body);
   const completionId = newCompletionId();
-  const agent = await agentPool.get({ model, systemPrompt });
+  const agent = await agentPool.get({ model });
 
   return streamSSE(
     c,
     async (sse) => {
       let first = true;
-      for await (const chunk of agent.stream({ messages })) {
+      for await (const chunk of agent.stream({ messages, systemPrompt })) {
         await sse.writeSSE({
           data: JSON.stringify(
             buildChunk(chunk.content, body.model, { id: completionId, first }),

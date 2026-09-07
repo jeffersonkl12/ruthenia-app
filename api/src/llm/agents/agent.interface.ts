@@ -21,6 +21,13 @@ export interface AgentSpec {
 export interface AgentInput {
   /** Mensagens da rodada (`{ role, content }` ou instâncias de `BaseMessage`). */
   messages: BaseMessageLike[];
+  /**
+   * Instrução de sistema desta rodada. Sobrescreve a do {@link AgentSpec}
+   * (que fica só como fallback). É por invocação porque o system prompt do
+   * jogo é remontado a cada mensagem a partir do estado do mundo, enquanto o
+   * agente e seu grafo permanecem estáveis — ver `AgentPool`.
+   */
+  systemPrompt?: string;
   /** Identifica a conversa quando `enableMemory` está ativo. */
   threadId?: string;
   /** Metadados mesclados no estado do grafo. */
