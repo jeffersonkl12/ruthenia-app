@@ -1,0 +1,34 @@
+# Cena Atual
+<% if (it.mode) { %>
+
+## Modo: <%= it.mode %>
+
+<% } %>
+<% if (it.title) { %>
+- Título: <%= it.title %>
+
+<% } %>
+<% if (it.description) { %>
+- Descrição: <%= it.description %>
+
+<% } %>
+<% if (it.mode === "COMBAT" && it.combat) { %>
+
+## Combate
+- Rodada: <%= it.combat.round %>
+
+<% if (it.combat.activeCombatant) { %>
+- Turno de: <%= it.combat.activeCombatant %>
+<% } %>
+
+<% } %>
+<% if (it.mode === "DIALOGUE" && it.dialogue) { %>
+
+## Diálogo
+- Com: <%= it.dialogue.npc %>
+
+<% if (it.dialogue.topic) { %>
+- Tópico: <%= it.dialogue.topic %>
+<% } %>
+
+<% } %>

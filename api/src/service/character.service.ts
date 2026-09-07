@@ -32,8 +32,12 @@ async function update(
   id: number,
   data: unknown,
 ): Promise<Character | undefined> {
-  const before = await characterRepository.findById(id);
   const parsed = updateCharacterSchema.parse(data);
+  if ("partyId" in parsed) {
+    await assertNotPartyLeader(id, "reassigned to a different party");
+  }
+
+  const before = await characterRepository.findById(id);
   const after = await characterRepository.update(id, parsed);
 
   if (before?.partyId && before.partyId !== after?.partyId) {
@@ -44,6 +48,8 @@ async function update(
 }
 
 async function remove(id: number): Promise<boolean> {
+  await assertNotPartyLeader(id, "deleted");
+
   const before = await characterRepository.findById(id);
   const removed = await characterRepository.remove(id);
 
@@ -52,6 +58,24 @@ async function remove(id: number): Promise<boolean> {
   }
 
   return removed;
+}
+
+/**
+ * Impede editar/apagar um personagem que hoje é líder de uma party por essas
+ * vias genéricas — trocar de líder ou desfazer uma party é responsabilidade
+ * de `partyService`, não algo que deva acontecer como efeito colateral de
+ * `characterService.update`/`remove`.
+ */
+async function assertNotPartyLeader(
+  characterId: number,
+  action: string,
+): Promise<void> {
+  const party = await partyRepository.findByLeaderId(characterId);
+  if (party) {
+    throw new Error(
+      `Character ${characterId} is the leader of party ${party.id} and cannot be ${action}`,
+    );
+  }
 }
 
 async function deletePartyIfEmpty(partyId: number): Promise<void> {

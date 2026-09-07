@@ -19,6 +19,11 @@ export interface PartyService extends Service<Party> {
     characterId: number,
   ): Promise<Character | undefined>;
   findByKingdomId(kingdomId: number): Promise<Party[]>;
+  /**
+   * Define o líder da party — sempre o personagem do jogador
+   * (`isPlayer: true`), que já precisa ser membro da party.
+   */
+  setLeader(partyId: number, characterId: number): Promise<Party | undefined>;
 }
 
 async function findAll(): Promise<Party[]> {
@@ -61,6 +66,12 @@ async function addMember(
     throw new Error(`Character ${characterId} not found`);
   }
 
+  if (character.isPlayer && party.leaderId && party.leaderId !== characterId) {
+    throw new Error(
+      `Party ${partyId} already has a leader (character ${party.leaderId}) — a party can only have one player character`,
+    );
+  }
+
   return characterService.update(characterId, { partyId });
 }
 
@@ -75,7 +86,43 @@ async function removeMember(
     );
   }
 
+  const party = await partyRepository.findById(partyId);
+  if (party?.leaderId === characterId) {
+    throw new Error(
+      `Character ${characterId} is the leader of party ${partyId} and cannot be removed as a member`,
+    );
+  }
+
   return characterService.update(characterId, { partyId: null });
+}
+
+async function setLeader(
+  partyId: number,
+  characterId: number,
+): Promise<Party | undefined> {
+  const party = await partyRepository.findById(partyId);
+  if (!party) {
+    throw new Error(`Party ${partyId} not found`);
+  }
+
+  const character = await characterRepository.findById(characterId);
+  if (!character) {
+    throw new Error(`Character ${characterId} not found`);
+  }
+
+  if (character.partyId !== partyId) {
+    throw new Error(
+      `Character ${characterId} is not a member of party ${partyId}`,
+    );
+  }
+
+  if (!character.isPlayer) {
+    throw new Error(
+      `Character ${characterId} is not a player character — only the player's character can lead a party`,
+    );
+  }
+
+  return partyRepository.update(partyId, { leaderId: characterId });
 }
 
 export const partyService: PartyService = {
@@ -87,4 +134,5 @@ export const partyService: PartyService = {
   remove,
   addMember,
   removeMember,
+  setLeader,
 };

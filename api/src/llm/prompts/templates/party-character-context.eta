@@ -1,0 +1,19 @@
+# Grupo e Personagens
+<% if (it.name) { %>
+
+## Party: <%= it.name %>
+
+<% } %>
+<% if (it.leader) { %>
+
+## Líder do Grupo
+- <%= it.leader.name %> (<%= it.leader.occupation %>, <%= it.leader.healthStatus %>) — FOR <%= it.leader.strength %>, DES <%= it.leader.dexterity %>, CON <%= it.leader.constitution %>, INT <%= it.leader.intelligence %>, SAB <%= it.leader.wisdom %>, CAR <%= it.leader.charisma %>
+
+<% } %>
+<% if (it.npcs && it.npcs.length) { %>
+
+## NPCs do Grupo
+<% for (const n of it.npcs) { %>
+- <%= n.name %> (<%= n.occupation %>, <%= n.healthStatus %>)
+<% } %>
+<% } %>
