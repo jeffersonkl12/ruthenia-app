@@ -4,3 +4,4 @@ export * from "./dynamic.layer";
 export * from "./system-prompt.config";
 export * from "./system-prompt.builder";
 export * from "./layers/identity.layer";
+export * from "./layers/game-system-rules.layer";
