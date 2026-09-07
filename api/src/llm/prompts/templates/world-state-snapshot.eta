@@ -23,12 +23,3 @@
 - Tipo: <%= it.location.type %>
 
 <% } %>
-<% if (it.scene) { %>
-
-## Cena Atual
-- Título: <%= it.scene.title %>
-
-<% if (it.scene.description) { %>- Descrição: <%= it.scene.description %>
-
-<% } %>
-<% } %>

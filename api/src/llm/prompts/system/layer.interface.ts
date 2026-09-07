@@ -20,12 +20,12 @@ export type LayerKind = "static" | "dynamic";
 /**
  * Estado do mundo entregue às camadas `dynamic` no momento do build.
  *
- * `session`, `scene`, `location` e `region` alimentam a camada
- * `world-state-snapshot`; `party` alimenta a camada `party-character-context`.
- * Nenhum call site de `systemPromptBuilder.build()` popula esses campos ainda —
- * ficam `undefined` até a busca real (sessão ativa, party, personagens,
- * location/region atuais) ser implementada. Ganha mais campos opcionais —
- * modo da sessão, ... — conforme outras camadas dinâmicas forem entrando.
+ * `session`, `location` e `region` alimentam a camada `world-state-snapshot`;
+ * `party` alimenta `party-character-context`; `scene` alimenta
+ * `scene-context`. Nenhum call site de `systemPromptBuilder.build()` popula
+ * esses campos ainda — ficam `undefined` até a busca real (sessão ativa,
+ * party, personagens, location/region/cena atuais) ser implementada. Ganha
+ * mais campos opcionais conforme outras camadas dinâmicas forem entrando.
  *
  * Regra de domínio: uma party tem sempre **um único líder**, e esse líder é
  * sempre o personagem do jogador (`isPlayer: true`) — o jogo não é
@@ -34,7 +34,7 @@ export type LayerKind = "static" | "dynamic";
  */
 export interface SystemPromptContext {
   session?: { name: string; mode: "NARRATIVE" | "COMBAT" };
-  scene?: { title: string; description?: string };
+  scene?: SceneContext;
   location?: { name: string; type: string };
   region?: { name: string; biome: string };
   party?: {
@@ -44,6 +44,20 @@ export interface SystemPromptContext {
     npcs: PartyCharacterSummary[];
   };
   [key: string]: unknown;
+}
+
+/** Modo da cena atual, usado pela camada `scene-context`. */
+export type SceneMode = "COMBAT" | "DIALOGUE" | "EXPLORATION";
+
+/** Estado completo da cena atual, consumido pela camada `scene-context`. */
+export interface SceneContext {
+  mode: SceneMode;
+  title?: string;
+  description?: string;
+  /** Presente só quando `mode === "COMBAT"`. */
+  combat?: { round: number; activeCombatant?: string };
+  /** Presente só quando `mode === "DIALOGUE"`. */
+  dialogue?: { npc: string; topic?: string };
 }
 
 /** Resumo de um personagem (líder ou NPC) usado pela camada `party-character-context`. */
